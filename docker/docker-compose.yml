@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  # xClaw Discord Bot
+  xclaw-discord:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.discord
+    container_name: xclaw-discord
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      - TESLA_CLIENT_ID=${TESLA_CLIENT_ID}
+      - TESLA_CLIENT_SECRET=${TESLA_CLIENT_SECRET}
+      - TESLA_REGION=${TESLA_REGION:-cn}
+      - TESLA_VIN=${TESLA_VIN}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o}
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      - redis
+    networks:
+      - xclaw-network
+
+  # xClaw Telegram Bot
+  xclaw-telegram:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.telegram
+    container_name: xclaw-telegram
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      - TESLA_CLIENT_ID=${TESLA_CLIENT_ID}
+      - TESLA_CLIENT_SECRET=${TESLA_CLIENT_SECRET}
+      - TESLA_REGION=${TESLA_REGION:-cn}
+      - TESLA_VIN=${TESLA_VIN}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_ALLOWED_USERS=${TELEGRAM_ALLOWED_USERS}
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      - redis
+    networks:
+      - xclaw-network
+
+  # xClaw WeChat Bot
+  xclaw-wechat:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.wechat
+    container_name: xclaw-wechat
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      - TESLA_CLIENT_ID=${TESLA_CLIENT_ID}
+      - TESLA_CLIENT_SECRET=${TESLA_CLIENT_SECRET}
+      - TESLA_REGION=${TESLA_REGION:-cn}
+      - TESLA_VIN=${TESLA_VIN}
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - WECHAT_MODE=${WECHAT_MODE:-mp}
+      - WECHAT_HOST=0.0.0.0
+      - WECHAT_PORT=8080
+      - WECHAT_MP_APP_ID=${WECHAT_MP_APP_ID}
+      - WECHAT_MP_APP_SECRET=${WECHAT_MP_APP_SECRET}
+      - WECHAT_MP_TOKEN=${WECHAT_MP_TOKEN}
+      - WECHAT_MP_ENCODING_AES_KEY=${WECHAT_MP_ENCODING_AES_KEY}
+      - WEWORK_CORP_ID=${WEWORK_CORP_ID}
+      - WEWORK_CORP_SECRET=${WEWORK_CORP_SECRET}
+      - WEWORK_AGENT_ID=${WEWORK_AGENT_ID}
+    ports:
+      - "8080:8080"
+    networks:
+      - xclaw-network
+
+  # Redis for caching and session storage
+  redis:
+    image: redis:7-alpine
+    container_name: xclaw-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    networks:
+      - xclaw-network
+
+  # Vehicle Monitor (optional)
+  xclaw-monitor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.monitor
+    container_name: xclaw-monitor
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      - TESLA_CLIENT_ID=${TESLA_CLIENT_ID}
+      - TESLA_CLIENT_SECRET=${TESLA_CLIENT_SECRET}
+      - TESLA_REGION=${TESLA_REGION:-cn}
+      - TESLA_VIN=${TESLA_VIN}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - MONITOR_INTERVAL=${MONITOR_INTERVAL:-60}
+    depends_on:
+      - redis
+    networks:
+      - xclaw-network
+    profiles:
+      - monitor
+
+volumes:
+  redis-data:
+
+networks:
+  xclaw-network:
+    driver: bridge
