@@ -2,14 +2,15 @@
 xClaw LLM Adapters
 
 Universal adapter for multiple LLM providers:
-- OpenAI (GPT-4, GPT-3.5)
-- 百度文心一言 (ERNIE-Bot)
-- 阿里通义千问 (Qwen)
-- 智谱清言 (ChatGLM/GLM-4)
+- OpenAI (GPT-4, GPT-3.5, GPT-4o)
+- Baidu ERNIE-Bot
+- Alibaba Qwen
+- Zhipu AI (ChatGLM/GLM-4)
 - Moonshot Kimi
-- 讯飞星火 (Spark)
+- iFlytek Spark
 - DeepSeek
 - OpenRouter
+- xAI (Grok)
 
 Usage:
     # Create adapter from environment
@@ -34,6 +35,7 @@ from .kimi_adapter import KimiAdapter
 from .spark_adapter import SparkAdapter
 from .deepseek_adapter import DeepseekAdapter
 from .openrouter_adapter import OpenRouterAdapter
+from .xai_adapter import XAIAdapter
 
 __version__ = "0.1.0"
 __all__ = [
@@ -55,4 +57,5 @@ __all__ = [
     "SparkAdapter",
     "DeepseekAdapter",
     "OpenRouterAdapter",
+    "XAIAdapter",
 ]

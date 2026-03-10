@@ -16,6 +16,7 @@ from .kimi_adapter import KimiAdapter
 from .spark_adapter import SparkAdapter
 from .deepseek_adapter import DeepseekAdapter
 from .openrouter_adapter import OpenRouterAdapter
+from .xai_adapter import XAIAdapter
 
 
 class LLMFactory:
@@ -44,6 +45,7 @@ class LLMFactory:
         LLMProvider.SPARK: SparkAdapter,
         LLMProvider.DEEPSEEK: DeepseekAdapter,
         LLMProvider.OPENROUTER: OpenRouterAdapter,
+        LLMProvider.XAI: XAIAdapter,
     }
     
     # Environment variable mappings
@@ -89,6 +91,11 @@ class LLMFactory:
             "model": "OPENROUTER_MODEL",
             "site_url": "OPENROUTER_SITE_URL",
             "site_name": "OPENROUTER_SITE_NAME",
+        },
+        LLMProvider.XAI: {
+            "api_key": "XAI_API_KEY",
+            "model": "XAI_MODEL",
+            "api_base": "XAI_API_BASE",
         },
     }
     
@@ -206,6 +213,9 @@ class LLMFactory:
             "deepseek": LLMProvider.DEEPSEEK,
             "深度求索": LLMProvider.DEEPSEEK,
             "openrouter": LLMProvider.OPENROUTER,
+            "xai": LLMProvider.XAI,
+            "grok": LLMProvider.XAI,
+            "elon": LLMProvider.XAI,
         }
         
         if provider in aliases:

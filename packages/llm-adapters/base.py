@@ -13,13 +13,14 @@ from enum import Enum
 class LLMProvider(str, Enum):
     """Supported LLM providers."""
     OPENAI = "openai"
-    WENXIN = "wenxin"           # 百度文心一言
-    QWEN = "qwen"               # 阿里通义千问
-    ZHIPU = "zhipu"             # 智谱清言
+    WENXIN = "wenxin"           # Baidu ERNIE
+    QWEN = "qwen"               # Alibaba Qwen
+    ZHIPU = "zhipu"             # Zhipu AI
     KIMI = "kimi"               # Moonshot Kimi
-    SPARK = "spark"             # 讯飞星火
+    SPARK = "spark"             # iFlytek Spark
     DEEPSEEK = "deepseek"       # DeepSeek
     OPENROUTER = "openrouter"   # OpenRouter
+    XAI = "xai"                 # xAI (Grok)
 
 
 @dataclass
