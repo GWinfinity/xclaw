@@ -27,6 +27,51 @@ xClaw is a lightweight, extensible AI framework that lets you control your Tesla
 - **📊 Structured Logging** — Full observability with structlog
 - **⚡ Async Architecture** — Built with `asyncio` for high performance
 
+## Supported Tesla Vehicles
+
+xClaw supports all Tesla Model 3 and Model Y vehicles, including the latest refreshed versions:
+
+| 车型 | 年款 | 代号 | MCU | 自动驾驶硬件 | VIN 前缀 |
+|------|------|------|-----|-------------|----------|
+| Model 3 旧款 | 2017-2023 | - | MCU2 (Intel Atom) | HW3.0/HW2.5 | `5YJ3E` |
+| **Model 3 焕新版** | 2023 Q4+ | **Highland** | **MCU3 (AMD Ryzen)** | **HW4.0** | `LRW3E` |
+| Model Y 旧款 | 2020-2024 | - | MCU2 (Intel Atom) | HW3.0 | `5YJY` |
+| **Model Y 焕新版** | 2025 Q1+ | **Juniper** | **MCU3 (AMD Ryzen)** | **HW4.0** | `LRWY` |
+
+### 功能兼容性
+
+| 功能 | 旧款 (MCU2) | 焕新版 (MCU3) |
+|------|------------|--------------|
+| 基础控制 (锁车/解锁/鸣笛/闪灯) | ✅ | ✅ |
+| 空调控制 | ✅ | ✅ |
+| 充电控制 | ✅ | ✅ |
+| 座椅加热 | ✅ | ✅ |
+| **座椅通风** | ❌ | ✅ |
+| 方向盘加热 | ✅ | ✅ |
+| **生物武器防御模式** | ❌ | ✅ |
+| 宠物/露营模式 | ✅ | ✅ |
+| 新调度命令 | 需固件 2024.26+ | ✅ |
+| 导航命令 | ✅ | ✅ |
+| 媒体控制 | ✅ | ✅ |
+
+### 硬件检测
+
+xClaw 会自动检测车辆硬件版本，并根据车型启用/禁用特定功能：
+
+```python
+# 获取车辆硬件信息
+info = await agent.process("查看我的车辆硬件信息")
+# 输出:
+# 🚗 Model 3 焕新版 (Highland)
+# 🔧 硬件: MCU3 (AMD Ryzen) / HW4.0
+# ✅ 支持: 座椅通风、生物武器防御模式、新调度命令
+
+# 自动兼容性检查
+await agent.process("开启座椅通风")
+# MCU3: ✅ 执行成功
+# MCU2: ❌ "座椅通风仅支持焕新版车型"
+```
+
 ## Quick Start
 
 ### Basic Usage
