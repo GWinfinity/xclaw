@@ -1,6 +1,6 @@
 # xClaw 🦞
 
-[![Python](https://img.shields.io/badge/Python-3.9%2B-blue)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.12%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 [![Tesla](https://img.shields.io/badge/Tesla-Fleet%20API-red)](https://developer.tesla.com/)
 
@@ -17,9 +17,14 @@ xClaw is a lightweight, extensible AI framework that lets you control your Tesla
 - **🗣️ Natural Language Control** — Talk to your Tesla like a human. No command memorization needed.
 - **🧠 Multi-LLM Support** — OpenAI, xAI (Grok), Anthropic, DeepSeek, Qwen, Kimi, and more
 - **💬 Multi-Platform** — Discord, Telegram, WeChat, Slack integrations
-- **🔧 Function Calling** — AI agents that actually *do* things, not just chat
-- **🧠 Context Memory** — Remembers preferences and conversation context
-- **🔒 Safety First** — Confirmation prompts for sensitive operations, full audit logging
+- **🔧 Function Calling** — AI agents that actually *do* things, not just chat (28+ vehicle tools)
+- **🧠 Persistent Memory** — SQLite + FTS5 full-text search, remembers across sessions
+- **📋 Multi-Step Planning** — Decomposes complex requests into ordered execution plans
+- **🎯 Skill Auto-Learning** — Learns reusable skills from successful interactions
+- **🗜️ Context Compression** — Summarizes old conversations to stay within token limits
+- **🔒 Safety Guardrails** — Rate limiting, command validation, audit logging
+- **⏰ Scheduled Tasks** — Pre-heat climate, schedule charging, periodic checks
+- **📊 Structured Logging** — Full observability with structlog
 - **⚡ Async Architecture** — Built with `asyncio` for high performance
 
 ## Quick Start
@@ -47,6 +52,66 @@ async def main():
     print(response.message)
     # ❄️ Climate control activated
     # 🌡️ Temperature set to 72°F
+
+    # Multi-step planning
+    response = await agent.process("明天早上8点出门前，把车预热到24度，充到80%")
+    print(response.message)
+    # 📋 已创建执行计划:
+    # ⏳ 定时空调: 7:45 AM, 24°C
+    # ⏳ 定时充电: 充至80%
+
+    # Close agent (cleans up resources)
+    await agent.close()
+
+asyncio.run(main())
+```
+
+### Advanced Usage with Persistent Memory
+
+```python
+import asyncio
+from packages.xclaw_core import XClawAgent, VehicleContext
+
+async def main():
+    context = VehicleContext()
+    
+    # Agent with all features enabled
+    agent = XClawAgent(
+        context,
+        user_id="user_123",
+        enable_persistent_memory=True,  # SQLite + FTS5
+        enable_safety=True,             # Rate limiting + audit
+        enable_planner=True,            # Multi-step planning
+        enable_skill_learning=True,     # Auto-learn skills
+    )
+    
+    # Start scheduled task scheduler
+    await agent.start_scheduler()
+    
+    # Schedule a task
+    agent.scheduler.schedule_climate(
+        user_id="user_123",
+        time_str="2024-01-15T07:45:00",
+        temperature=24.0,
+        name="早起预热"
+    )
+    
+    # Process requests (memory persists across sessions)
+    response = await agent.process("我习惯车内温度22度")
+    # Agent learns this preference for future interactions
+    
+    response = await agent.process("车里太热了")
+    # Agent remembers preference and sets to 22°C
+    
+    # Get audit summary
+    summary = agent.get_audit_summary(hours=24)
+    print(f"过去24小时执行了 {summary['total_commands']} 个命令")
+    
+    # Get memory stats
+    stats = agent.get_memory_stats()
+    print(f"记忆: {stats}")
+    
+    await agent.close()
 
 asyncio.run(main())
 ```
@@ -140,18 +205,25 @@ TELEGRAM_BOT_TOKEN=...
 ```
 xClaw
 ├── Core Layer
-│   ├── XClawAgent          # AI agent with function calling
-│   ├── TeslaToolSet        # Vehicle control primitives
-│   ├── ConversationMemory  # Context persistence
-│   └── VehicleContext      # State management
+│   ├── XClawAgent              # AI agent with function calling
+│   ├── TeslaToolSet            # 28+ vehicle control tools
+│   ├── ConversationMemory      # In-memory context
+│   ├── PersistentMemory        # SQLite + FTS5 persistent memory
+│   ├── VehicleContext          # State management
+│   ├── Planner                 # Multi-step planning engine
+│   ├── SkillLearner            # Auto-learn from interactions
+│   ├── ContextCompressor       # Token-aware compression
+│   ├── TaskScheduler           # Cron-like scheduled tasks
+│   ├── SafetyGuard             # Rate limiting & audit
+│   └── StructuredLogger        # Observability with structlog
 │
 ├── Adapter Layer
-│   ├── llm-adapters/       # 9+ LLM provider adapters
+│   ├── llm-adapters/           # 9+ LLM provider adapters
 │   │   ├── OpenAI
 │   │   ├── xAI (Grok)
 │   │   ├── DeepSeek
 │   │   └── ...
-│   └── platform-clients/   # Messaging platform clients
+│   └── platform-clients/       # Messaging platform clients
 │       ├── Discord
 │       ├── Telegram
 │       └── WeChat
@@ -209,14 +281,24 @@ print(data.climate_state.inside_temp)
 | Tool | Description |
 |------|-------------|
 | `get_vehicle_data` | Retrieve complete vehicle state |
+| `get_location` | Get vehicle GPS location |
 | `lock_doors` / `unlock_doors` | Door control |
 | `start_climate` / `stop_climate` | Climate control |
 | `set_temperature` | Set target temperature |
+| `set_seat_heater` | Set seat heating level (0-3) |
+| `set_steering_wheel_heater` | Toggle steering wheel heater |
 | `start_charging` / `stop_charging` | Charging control |
 | `set_charge_limit` | Set charge limit (%) |
+| `set_charging_amps` | Set charging amperage |
 | `honk_horn` / `flash_lights` | Locate vehicle |
 | `set_sentry_mode` | Toggle Sentry Mode |
 | `open_frunk` / `open_trunk` | Front/rear trunk |
+| `vent_windows` / `close_windows` | Window control |
+| `set_speed_limit` | Set vehicle speed limit |
+| `set_valet_mode` | Toggle valet mode |
+| `trigger_homelink` | Trigger garage door opener |
+| `schedule_software_update` | Schedule OTA update |
+| `cancel_software_update` | Cancel scheduled update |
 
 ## Examples
 
@@ -321,11 +403,11 @@ xClaw can operate as:
 ## Requirements
 
 - Python >= 3.9
-- httpx >= 0.24.0
-- pydantic >= 2.0.0
-- openai >= 1.0.0 (optional)
-- discord.py >= 2.3.0 (for Discord)
-- python-telegram-bot >= 20.0 (for Telegram)
+- httpx >= 0.28.0
+- pydantic >= 2.13.0
+- openai >= 2.40.0 (optional)
+- discord.py >= 2.7.0 (for Discord)
+- python-telegram-bot >= 22.0 (for Telegram)
 
 ## Documentation
 

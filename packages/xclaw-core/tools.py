@@ -32,6 +32,7 @@ class TeslaToolSet:
         self.vehicle_context = vehicle_context
         self._tools: Dict[str, Callable] = {
             "get_vehicle_data": self._get_vehicle_data,
+            "get_location": self._get_location,
             "wake_vehicle": self._wake_vehicle,
             "lock_doors": self._lock_doors,
             "unlock_doors": self._unlock_doors,
@@ -40,9 +41,12 @@ class TeslaToolSet:
             "start_climate": self._start_climate,
             "stop_climate": self._stop_climate,
             "set_temperature": self._set_temperature,
+            "set_seat_heater": self._set_seat_heater,
+            "set_steering_wheel_heater": self._set_steering_wheel_heater,
             "start_charging": self._start_charging,
             "stop_charging": self._stop_charging,
             "set_charge_limit": self._set_charge_limit,
+            "set_charging_amps": self._set_charging_amps,
             "open_charge_port": self._open_charge_port,
             "close_charge_port": self._close_charge_port,
             "open_trunk": self._open_trunk,
@@ -50,6 +54,11 @@ class TeslaToolSet:
             "set_sentry_mode": self._set_sentry_mode,
             "vent_windows": self._vent_windows,
             "close_windows": self._close_windows,
+            "set_speed_limit": self._set_speed_limit,
+            "set_valet_mode": self._set_valet_mode,
+            "trigger_homelink": self._trigger_homelink,
+            "schedule_software_update": self._schedule_software_update,
+            "cancel_software_update": self._cancel_software_update,
         }
     
     def get_openai_functions(self) -> List[Dict[str, Any]]:
@@ -298,6 +307,156 @@ class TeslaToolSet:
                     },
                 },
             },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_location",
+                    "description": "获取车辆当前位置（经纬度）",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {},
+                        "required": [],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "set_seat_heater",
+                    "description": "设置座椅加热等级",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "seat": {
+                                "type": "integer",
+                                "description": "座椅位置: 0=前排左, 1=前排右, 2=后排左, 3=后排中, 4=后排右",
+                            },
+                            "level": {
+                                "type": "integer",
+                                "description": "加热等级: 0=关闭, 1=低, 2=中, 3=高",
+                            },
+                        },
+                        "required": ["seat", "level"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "set_steering_wheel_heater",
+                    "description": "设置方向盘加热",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "enabled": {
+                                "type": "boolean",
+                                "description": "true 开启，false 关闭",
+                            },
+                        },
+                        "required": ["enabled"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "set_charging_amps",
+                    "description": "设置充电电流（安培）",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "amps": {
+                                "type": "integer",
+                                "description": "充电电流 (0-32 安培)",
+                            },
+                        },
+                        "required": ["amps"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "set_speed_limit",
+                    "description": "设置车辆限速",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "limit_mph": {
+                                "type": "integer",
+                                "description": "限速值（英里/小时）",
+                            },
+                            "pin": {
+                                "type": "string",
+                                "description": "4位PIN码",
+                            },
+                        },
+                        "required": ["limit_mph", "pin"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "set_valet_mode",
+                    "description": "设置代客模式",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "enabled": {
+                                "type": "boolean",
+                                "description": "true 开启，false 关闭",
+                            },
+                            "pin": {
+                                "type": "string",
+                                "description": "4位PIN码（开启时必填）",
+                            },
+                        },
+                        "required": ["enabled"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "trigger_homelink",
+                    "description": "触发 Homelink 车库门开关",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {},
+                        "required": [],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "schedule_software_update",
+                    "description": "调度软件更新",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "offset_minutes": {
+                                "type": "integer",
+                                "description": "延迟多少分钟后开始更新（默认0=立即）",
+                            },
+                        },
+                        "required": [],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "cancel_software_update",
+                    "description": "取消已调度的软件更新",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {},
+                        "required": [],
+                    },
+                },
+            },
         ]
     
     async def execute(self, function_name: str, arguments: Dict[str, Any]) -> ToolResult:
@@ -451,3 +610,71 @@ class TeslaToolSet:
         lon = data.get("longitude")
         success = await vehicle.window_control("close", lat=lat, lon=lon)
         return {"success": success, "action": "close_windows"}
+    
+    async def _get_location(self) -> Dict[str, Any]:
+        """Get vehicle location."""
+        vehicle = await self.vehicle_context.get_vehicle()
+        data = await vehicle.get_location_data()
+        return {
+            "latitude": data.get("latitude"),
+            "longitude": data.get("longitude"),
+            "heading": data.get("heading"),
+            "speed": data.get("speed"),
+            "timestamp": data.get("timestamp"),
+        }
+    
+    async def _set_seat_heater(self, seat: int, level: int) -> Dict[str, Any]:
+        """Set seat heater."""
+        vehicle = await self.vehicle_context.get_vehicle()
+        success = await vehicle.set_seat_heater(seat, level)
+        seat_names = {0: "前排左", 1: "前排右", 2: "后排左", 3: "后排中", 4: "后排右"}
+        return {
+            "success": success,
+            "seat": seat_names.get(seat, f"座椅{seat}"),
+            "level": level,
+        }
+    
+    async def _set_steering_wheel_heater(self, enabled: bool) -> Dict[str, Any]:
+        """Set steering wheel heater."""
+        vehicle = await self.vehicle_context.get_vehicle()
+        success = await vehicle.set_steering_wheel_heater(enabled)
+        return {"success": success, "steering_wheel_heater": enabled}
+    
+    async def _set_charging_amps(self, amps: int) -> Dict[str, Any]:
+        """Set charging amps."""
+        vehicle = await self.vehicle_context.get_vehicle()
+        success = await vehicle.set_charging_amps(amps)
+        return {"success": success, "charging_amps": amps}
+    
+    async def _set_speed_limit(self, limit_mph: int, pin: str) -> Dict[str, Any]:
+        """Set speed limit."""
+        vehicle = await self.vehicle_context.get_vehicle()
+        success = await vehicle.speed_limit_set_limit(limit_mph)
+        return {"success": success, "speed_limit_mph": limit_mph}
+    
+    async def _set_valet_mode(self, enabled: bool, pin: Optional[str] = None) -> Dict[str, Any]:
+        """Set valet mode."""
+        vehicle = await self.vehicle_context.get_vehicle()
+        success = await vehicle.set_valet_mode(enabled, pin)
+        return {"success": success, "valet_mode": enabled}
+    
+    async def _trigger_homelink(self) -> Dict[str, Any]:
+        """Trigger homelink."""
+        vehicle = await self.vehicle_context.get_vehicle()
+        data = await vehicle.get_location_data()
+        lat = data.get("latitude")
+        lon = data.get("longitude")
+        success = await vehicle.trigger_homelink(lat, lon)
+        return {"success": success, "action": "trigger_homelink"}
+    
+    async def _schedule_software_update(self, offset_minutes: int = 0) -> Dict[str, Any]:
+        """Schedule software update."""
+        vehicle = await self.vehicle_context.get_vehicle()
+        success = await vehicle.schedule_software_update(offset_sec=offset_minutes * 60)
+        return {"success": success, "offset_minutes": offset_minutes}
+    
+    async def _cancel_software_update(self) -> Dict[str, Any]:
+        """Cancel software update."""
+        vehicle = await self.vehicle_context.get_vehicle()
+        success = await vehicle.cancel_software_update()
+        return {"success": success, "action": "cancel_software_update"}
