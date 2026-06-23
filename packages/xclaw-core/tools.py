@@ -59,6 +59,11 @@ class TeslaToolSet:
             "trigger_homelink": self._trigger_homelink,
             "schedule_software_update": self._schedule_software_update,
             "cancel_software_update": self._cancel_software_update,
+            "navigate_to": self._navigate_to,
+            "navigate_to_supercharger": self._navigate_to_supercharger,
+            "set_climate_keeper_mode": self._set_climate_keeper_mode,
+            "set_bioweapon_mode": self._set_bioweapon_mode,
+            "get_vehicle_info": self._get_vehicle_info,
         }
     
     def get_openai_functions(self) -> List[Dict[str, Any]]:
@@ -457,6 +462,86 @@ class TeslaToolSet:
                     },
                 },
             },
+            {
+                "type": "function",
+                "function": {
+                    "name": "navigate_to",
+                    "description": "导航到指定位置（地址或坐标）",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "destination": {
+                                "type": "string",
+                                "description": "目的地地址或名称",
+                            },
+                        },
+                        "required": ["destination"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "navigate_to_supercharger",
+                    "description": "导航到超级充电站",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "supercharger_id": {
+                                "type": "integer",
+                                "description": "超级充电站 ID",
+                            },
+                        },
+                        "required": ["supercharger_id"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "set_climate_keeper_mode",
+                    "description": "设置气候保持模式",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "mode": {
+                                "type": "integer",
+                                "description": "模式: 0=关闭, 1=保持, 2=宠物模式, 3=露营模式",
+                            },
+                        },
+                        "required": ["mode"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "set_bioweapon_mode",
+                    "description": "设置生物武器防御模式",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "enabled": {
+                                "type": "boolean",
+                                "description": "true 开启，false 关闭",
+                            },
+                        },
+                        "required": ["enabled"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_vehicle_info",
+                    "description": "获取车辆硬件信息（车型、硬件版本、支持的功能）",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {},
+                        "required": [],
+                    },
+                },
+            },
         ]
     
     async def execute(self, function_name: str, arguments: Dict[str, Any]) -> ToolResult:
@@ -678,3 +763,96 @@ class TeslaToolSet:
         vehicle = await self.vehicle_context.get_vehicle()
         success = await vehicle.cancel_software_update()
         return {"success": success, "action": "cancel_software_update"}
+    
+    async def _navigate_to(self, destination: str) -> Dict[str, Any]:
+        """Navigate to destination."""
+        vehicle = await self.vehicle_context.get_vehicle()
+        success = await vehicle.navigation_request(destination)
+        return {"success": success, "destination": destination}
+    
+    async def _navigate_to_supercharger(self, supercharger_id: int) -> Dict[str, Any]:
+        """Navigate to supercharger."""
+        vehicle = await self.vehicle_context.get_vehicle()
+        success = await vehicle.navigation_sc_request(supercharger_id)
+        return {"success": success, "supercharger_id": supercharger_id}
+    
+    async def _set_climate_keeper_mode(self, mode: int) -> Dict[str, Any]:
+        """Set climate keeper mode."""
+        vehicle = await self.vehicle_context.get_vehicle()
+        success = await vehicle.set_climate_keeper_mode(mode)
+        mode_names = {0: "关闭", 1: "保持模式", 2: "宠物模式", 3: "露营模式"}
+        return {"success": success, "mode": mode_names.get(mode, f"模式{mode}")}
+    
+    async def _set_seat_cooler(self, seat: int, level: int) -> Dict[str, Any]:
+        """Set seat cooler (MCU3/Highland/Juniper only)."""
+        vehicle = await self.vehicle_context.get_vehicle()
+        if not hasattr(vehicle, 'has_seat_cooling') or not vehicle.has_seat_cooling:
+            return {"success": False, "error": "座椅通风仅支持焕新版车型 (Model 3 Highland / Model Y Juniper)"}
+        success = await vehicle.set_seat_cooler(seat, level)
+        return {"success": success, "seat": seat, "level": level}
+    
+    async def _set_bioweapon_mode(self, enabled: bool) -> Dict[str, Any]:
+        """Set bioweapon defense mode (refreshed models only)."""
+        vehicle = await self.vehicle_context.get_vehicle()
+        if not hasattr(vehicle, 'has_bioweapon_mode') or not vehicle.has_bioweapon_mode:
+            return {"success": False, "error": "生物武器防御模式仅支持焕新版车型"}
+        success = await vehicle.set_bioweapon_mode(enabled)
+        return {"success": success, "bioweapon_mode": enabled}
+    
+    async def _get_vehicle_info(self) -> Dict[str, Any]:
+        """Get vehicle hardware info and supported features."""
+        vehicle = await self.vehicle_context.get_vehicle()
+        
+        # Detect model type
+        model_type = getattr(vehicle, 'model_type', 'unknown')
+        is_highland = getattr(vehicle, 'is_highland', False)
+        is_juniper = getattr(vehicle, 'is_juniper', False)
+        has_mcu3 = getattr(vehicle, 'has_mcu3', False)
+        
+        # Model name mapping
+        model_names = {
+            'model3': 'Model 3',
+            'modely': 'Model Y',
+            'models': 'Model S',
+            'modelx': 'Model X',
+            'cybertruck': 'Cybertruck',
+        }
+        
+        # Generation name
+        if is_highland:
+            generation = "焕新版 (Highland)"
+        elif is_juniper:
+            generation = "焕新版 (Juniper)"
+        else:
+            generation = "旧款"
+        
+        # Hardware info
+        hw_gen = getattr(vehicle, '_detect_hardware_generation', lambda: 'unknown')()
+        mcu = "MCU3 (AMD Ryzen)" if has_mcu3 else "MCU2 (Intel Atom)"
+        
+        # Supported features
+        features = {
+            "基础控制": True,
+            "空调控制": True,
+            "充电控制": True,
+            "座椅加热": True,
+            "座椅通风": has_mcu3,
+            "方向盘加热": True,
+            "生物武器防御模式": is_highland or is_juniper,
+            "宠物/露营模式": True,
+            "新调度命令": has_mcu3,
+            "窗户控制(无需坐标)": True,
+            "导航命令": True,
+            "媒体控制": True,
+        }
+        
+        return {
+            "display_name": vehicle.display_name,
+            "vin": vehicle.vin,
+            "model": model_names.get(model_type, model_type),
+            "generation": generation,
+            "hardware": hw_gen,
+            "mcu": mcu,
+            "is_refreshed": is_highland or is_juniper,
+            "features": features,
+        }

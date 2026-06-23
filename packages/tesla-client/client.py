@@ -2,6 +2,11 @@
 Tesla Fleet API Client
 
 Main client for interacting with Tesla Fleet API.
+Updated for 2026 API changes:
+- New token exchange domain (fleet-auth.prd.vn.cloud.tesla.com)
+- New vehicle_location scope
+- Support for all current Model 3/Y vehicles
+- New scheduling commands (add_charge_schedule, add_precondition_schedule)
 """
 
 import os
@@ -27,6 +32,8 @@ class TeslaFleetClient:
     """
     Tesla Fleet API Client
     
+    Updated for 2026 API compatibility with all Model 3/Y vehicles.
+    
     Usage:
         client = TeslaFleetClient(
             client_id="your_client_id",
@@ -47,30 +54,34 @@ class TeslaFleetClient:
         data = await vehicle.get_vehicle_data()
     """
     
-    # API Endpoints by region
+    # API Endpoints by region (2026 updated)
     BASE_URLS = {
         "na": "https://fleet-api.prd.na.vn.cloud.tesla.com",
         "eu": "https://fleet-api.prd.eu.vn.cloud.tesla.com",
         "cn": "https://fleet-api.prd.cn.vn.cloud.tesla.cn",
     }
     
+    # Updated auth URLs - using fleet-auth domain for token exchange (2025-07 change)
     AUTH_URLS = {
         "na": "https://auth.tesla.com/oauth2/v3/authorize",
         "eu": "https://auth.tesla.com/oauth2/v3/authorize",
         "cn": "https://auth.tesla.cn/oauth2/v3/authorize",
     }
     
+    # Token exchange now uses fleet-auth domain for higher rate limits
     TOKEN_URLS = {
-        "na": "https://auth.tesla.com/oauth2/v3/token",
-        "eu": "https://auth.tesla.com/oauth2/v3/token",
-        "cn": "https://auth.tesla.cn/oauth2/v3/token",
+        "na": "https://fleet-auth.prd.vn.cloud.tesla.com/oauth2/v3/token",
+        "eu": "https://fleet-auth.prd.vn.cloud.tesla.com/oauth2/v3/token",
+        "cn": "https://fleet-auth.prd.vn.cloud.tesla.com/oauth2/v3/token",
     }
     
+    # Updated scopes - added vehicle_location (required since Jan 2025)
     SCOPES = [
         "openid",
         "offline_access",
         "user_data",
         "vehicle_device_data",
+        "vehicle_location",  # NEW: Required since Jan 2025
         "vehicle_cmds",
         "vehicle_charging_cmds",
         "energy_device_data",
