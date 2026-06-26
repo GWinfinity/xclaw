@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>xClaw Tesla AI Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">X</span>
+        <h1>xClaw Tesla AI</h1>
+      </div>
+      <div class="connection">
+        <span id="conn-status" class="disconnected">Disconnected</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="vehicle-card">
+        <h2>Vehicle Status</h2>
+        <div id="vehicle-info" class="info-grid">
+          <div class="info-item">
+            <span class="label">Name</span>
+            <span class="value" id="v-name">-</span>
+          </div>
+          <div class="info-item">
+            <span class="label">State</span>
+            <span class="value" id="v-state">-</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Battery</span>
+            <span class="value" id="v-battery">-</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Range</span>
+            <span class="value" id="v-range">-</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Climate</span>
+            <span class="value" id="v-climate">-</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Locked</span>
+            <span class="value" id="v-locked">-</span>
+          </div>
+        </div>
+        <button id="refresh-status" class="secondary">Refresh</button>
+      </section>
+
+      <section class="chat-card">
+        <h2>AI Assistant</h2>
+        <div id="chat-history" class="chat-history"></div>
+        <div class="chat-input">
+          <input type="text" id="chat-input" placeholder="Ask about your Tesla..." autocomplete="off" />
+          <button id="chat-send" class="primary">Send</button>
+        </div>
+        <div class="quick-actions">
+          <button class="quick-btn" data-prompt="我应该现在充电吗？">充电建议</button>
+          <button class="quick-btn" data-prompt="当前车辆状态一句话总结">状态总结</button>
+          <button class="quick-btn" data-prompt="帮我打开空调到 22 度">开空调</button>
+          <button class="quick-btn" data-prompt="最近的超充站在哪？">找超充</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

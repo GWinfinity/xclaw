@@ -26,6 +26,7 @@ xClaw is a lightweight, extensible AI framework that lets you control your Tesla
 - **⏰ Scheduled Tasks** — Pre-heat climate, schedule charging, periodic checks
 - **📊 Structured Logging** — Full observability with structlog
 - **⚡ Async Architecture** — Built with `asyncio` for high performance
+- **🚗 Tesla Browser AI** — In-car AI assistant that runs in the Tesla browser, no hardware required
 
 ## Supported Tesla Vehicles
 
@@ -254,6 +255,128 @@ TELEGRAM_BOT_TOKEN=...
 | **Telegram** | `telegram` | Privacy-focused users |
 | **WeChat** | `wechat` | Chinese market |
 | **Slack** | `slack` | Enterprise teams |
+
+## Tesla Browser AI
+
+xClaw includes a **zero-hardware** AI upgrade path for Tesla vehicles: a web dashboard that runs inside the Tesla in-car browser (or any Chrome browser) and connects to your own xClaw backend. Because it communicates through Tesla's official Fleet API, it is safe, reversible, and does not risk VIN bans or warranty issues.
+
+### What It Is
+
+- A FastAPI backend (`packages/tesla_client/browser_server.py`) that serves the dashboard and proxies vehicle data/commands.
+- A responsive web dashboard (`extensions/tesla_browser/dashboard/`) optimized for the Tesla touchscreen.
+- An optional Chrome extension (`extensions/tesla_browser/`) that adds a floating AI button on Tesla web pages.
+
+### Why It Doesn't Care About Latency
+
+Tesla Fleet API calls route through Tesla's cloud servers and typically complete in **1–5 seconds**. That is perfectly acceptable for features that are not time-critical. The browser solution is ideal for:
+
+| Category | Examples | Fleet API Methods |
+|----------|----------|-------------------|
+| **Climate pre-conditioning** | Turn on AC, set temperature, enable seat/steering wheel heaters | `auto_conditioning_start`, `set_climate_temperature`, `set_seat_heater` |
+| **Charging management** | Start/stop charging, set charge limit, adjust amps | `charge_start`, `set_charge_limit`, `set_charging_amps` |
+| **Access & convenience** | Lock/unlock, open charge port, trunk/frunk | `lock_doors`, `charge_port_door_open`, `actuate_trunk` |
+| **Security** | Sentry mode, valet mode, speed limit | `set_sentry_mode`, `set_valet_mode`, `speed_limit_set_limit` |
+| **Navigation** | Send destination, find supercharger | `navigation_request`, `navigation_sc_request` |
+| **Status queries** | Battery, range, climate, location, OTA status | `get_vehicle_data` |
+| **Scheduling** | Scheduled charging, preconditioning | `add_charge_schedule`, `add_precondition_schedule` |
+
+### What It Cannot Do
+
+Because Fleet API latency is too high for real-time control, the browser solution **cannot**:
+
+- Perform real-time CAN frame injection (e.g., FSD unlock, nag killer, TLSSC restore).
+- Read live CAN bus data such as BMS cell temperatures, motor torque, or DAS state.
+- Execute safety-critical driving commands (steering, braking, acceleration).
+
+Those require the CAN/ESP32 hardware approach (see `packages/tesla_client/can_bus.py`).
+
+### Architecture
+
+```
+┌─────────────────────┐      HTTPS/WSS      ┌──────────────────────┐
+│  Tesla Browser /    │ ◄─────────────────► │  xClaw Backend       │
+│  Chrome Extension   │                     │  browser_server.py   │
+└─────────────────────┘                     └──────────┬───────────┘
+                                                       │
+                          ┌────────────────────────────┘
+                          ▼
+               ┌─────────────────────┐
+               │  Tesla Fleet API    │
+               │  (official, safe)   │
+               └─────────────────────┘
+                          ▲
+                          │
+               ┌─────────────────────┐
+               │  User LLM API       │
+               │  (OpenAI/Kimi/etc.) │
+               └─────────────────────┘
+```
+
+### Quick Start
+
+1. Configure your environment variables (see `.env.example`):
+
+   ```bash
+   TESLA_CLIENT_ID=your_client_id
+   TESLA_CLIENT_SECRET=your_client_secret
+   TESLA_ACCESS_TOKEN=your_access_token
+   TESLA_REFRESH_TOKEN=your_refresh_token
+   TESLA_REGION=cn
+   TESLA_VIN=your_vin_optional
+
+   LLM_PROVIDER=openai
+   OPENAI_API_KEY=sk-...
+   OPENAI_MODEL=gpt-4o
+   ```
+
+2. Start the backend:
+
+   ```bash
+   python -m packages.tesla_client.browser_server
+   ```
+
+3. Open the dashboard in your Tesla browser:
+
+   ```
+   http://<your-backend-ip>:8080/dashboard/
+   ```
+
+4. Bookmark the page for quick access.
+
+### Chrome Extension
+
+```bash
+# Load the extension in Chrome developer mode
+chrome://extensions → Developer mode → Load unpacked → select extensions/tesla_browser
+```
+
+### API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/health` | GET | Health check |
+| `/api/vehicle` | GET | Current vehicle state |
+| `/api/chat` | POST | Chat with the AI copilot |
+| `/api/command` | POST | Execute a Fleet API command |
+| `/ws` | WebSocket | Real-time vehicle updates |
+
+### Browser vs. CAN/ESP32 Trade-offs
+
+| Capability | Browser (Fleet API) | CAN/ESP32 |
+|------------|---------------------|-----------|
+| Hardware required | None | ESP32 + CAN transceiver |
+| Installation | Open URL / load extension | Wire to OBD-II/X179 |
+| Safety risk | Minimal | Higher |
+| VIN ban risk | None | Possible |
+| Latency | 1–5 seconds | 5–20 ms |
+| Pre-conditioning | ✅ | ✅ (if connected) |
+| Real-time FSD/TLSSC injection | ❌ | ✅ |
+| Live BMS/DAS monitoring | ❌ | ✅ |
+
+### Documentation
+
+- [Browser Extension README](extensions/tesla_browser/README.md)
+- [Example: Start Server](examples/tesla_browser_server.py)
 
 ## Architecture
 

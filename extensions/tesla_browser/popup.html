@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>xClaw Tesla AI</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <img src="icons/icon48.png" alt="xClaw" />
+      <h1>xClaw Tesla AI</h1>
+    </header>
+
+    <section>
+      <label for="backend-url">xClaw Backend URL</label>
+      <input type="url" id="backend-url" placeholder="http://localhost:8080" />
+      <button id="save-url">Save</button>
+    </section>
+
+    <section class="status">
+      <p>Status: <span id="status-text">Checking...</span></p>
+    </section>
+
+    <section class="actions">
+      <button id="open-dashboard" class="primary">Open Dashboard</button>
+      <button id="open-options">Options</button>
+    </section>
+
+    <footer>
+      <p>Vehicle AI without hardware mods.</p>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

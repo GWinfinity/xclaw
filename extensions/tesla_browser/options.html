@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>xClaw Tesla AI Options</title>
+  <link rel="stylesheet" href="popup.css" />
+  <style>
+    body { max-width: 600px; margin: 40px auto; background: #fff; }
+    .container { padding: 24px; }
+    h2 { margin-top: 24px; }
+    .field { margin-bottom: 16px; }
+    .hint { font-size: 12px; color: #666; margin-top: 4px; }
+    #saved-msg { color: #0a0; font-weight: 600; display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <img src="icons/icon48.png" alt="xClaw" />
+      <h1>xClaw Tesla AI Options</h1>
+    </header>
+
+    <h2>Backend</h2>
+    <div class="field">
+      <label for="backend-url">xClaw Backend URL</label>
+      <input type="url" id="backend-url" placeholder="http://localhost:8080" />
+      <p class="hint">Point this to the machine running <code>python -m packages.tesla_client.browser_server</code>.</p>
+    </div>
+
+    <h2>Vehicle</h2>
+    <div class="field">
+      <label for="default-vin">Default VIN (optional)</label>
+      <input type="text" id="default-vin" placeholder="5YJ..." />
+      <p class="hint">Leave empty to use the first vehicle returned by the Fleet API.</p>
+    </div>
+
+    <button id="save" class="primary">Save Options</button>
+    <p id="saved-msg">Saved!</p>
+
+    <h2>How to use in Tesla browser</h2>
+    <ol>
+      <li>Start the xClaw backend on a machine with network access.</li>
+      <li>In your Tesla, open the browser and navigate to <code>&lt;backend-url&gt;/dashboard/</code>.</li>
+      <li>Bookmark the page for quick access.</li>
+      <li>Ask the AI about your vehicle, charging, climate, etc.</li>
+    </ol>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
