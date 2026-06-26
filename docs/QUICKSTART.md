@@ -111,7 +111,7 @@ TELEGRAM_ALLOWED_USERS=12345678,87654321  # 你的 Telegram 用户 ID
 python run.py discord
 
 # 或直接运行
-python -m extensions.discord-bot.bot
+python -m extensions.discord_bot.bot
 ```
 
 ### 运行 Telegram Bot
@@ -120,7 +120,7 @@ python -m extensions.discord-bot.bot
 python run.py telegram
 
 # 或直接运行
-python -m extensions.telegram-bot.bot
+python -m extensions.telegram_bot.bot
 ```
 
 ### 运行示例

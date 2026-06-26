@@ -15,11 +15,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY packages/ ./packages/
-COPY extensions/telegram-bot/ ./extensions/telegram-bot/
+COPY extensions/telegram_bot/ ./extensions/telegram_bot/
 COPY tools/ ./tools/
 
 # Set Python path
 ENV PYTHONPATH=/app
 
 # Run Telegram bot
-CMD ["python", "-m", "extensions.telegram-bot.bot"]
+CMD ["python", "-m", "extensions.telegram_bot.bot"]

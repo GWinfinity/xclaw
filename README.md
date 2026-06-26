@@ -264,7 +264,7 @@ xClaw
 │   └── StructuredLogger        # Observability with structlog
 │
 ├── Adapter Layer
-│   ├── llm-adapters/           # 10+ LLM provider adapters
+│   ├── llm_adapters/           # 10+ LLM provider adapters
 │   │   ├── OpenAI
 │   │   ├── xAI (Grok)
 │   │   ├── DeepSeek

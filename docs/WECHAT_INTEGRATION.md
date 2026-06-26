@@ -57,7 +57,7 @@ WECHAT_MP_ENCODING_AES_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ```bash
 # 方式1: 直接运行
-python -m extensions.wechat-bot.bot
+python -m extensions.wechat_bot.bot
 
 # 方式2: 使用 run.py
 python run.py wechat
@@ -146,7 +146,7 @@ WECHATY_PUPPET=wechaty-puppet-wechat
 ### 3. 启动并扫码登录
 
 ```bash
-python -m extensions.wechat-bot.bot
+python -m extensions.wechat_bot.bot
 ```
 
 启动后会显示二维码，使用微信扫码登录。

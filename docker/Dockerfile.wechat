@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY packages/ ./packages/
-COPY extensions/wechat-bot/ ./extensions/wechat-bot/
+COPY extensions/wechat_bot/ ./extensions/wechat_bot/
 COPY tools/ ./tools/
 
 # Set Python path
@@ -25,4 +25,4 @@ ENV PYTHONPATH=/app
 EXPOSE 8080
 
 # Run WeChat bot
-CMD ["python", "-m", "extensions.wechat-bot.bot"]
+CMD ["python", "-m", "extensions.wechat_bot.bot"]

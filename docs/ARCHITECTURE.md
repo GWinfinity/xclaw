@@ -35,7 +35,7 @@ xClaw 是一个对标 [rosclaw](https://github.com/PlaiPin/rosclaw) 的项目，
 
 ## 核心组件
 
-### 1. Tesla Fleet API Client (`packages/tesla-client/`)
+### 1. Tesla Fleet API Client (`packages/tesla_client/`)
 
 与 Tesla Fleet API 通信的 Python 客户端。
 
@@ -50,7 +50,7 @@ xClaw 是一个对标 [rosclaw](https://github.com/PlaiPin/rosclaw) 的项目，
 - `Vehicle`: 车辆实例，提供控制方法
 - 数据模型: `VehicleData`, `ChargeState`, `ClimateState`, etc.
 
-### 2. AI Agent Core (`packages/xclaw-core/`)
+### 2. AI Agent Core (`packages/xclaw_core/`)
 
 AI 代理核心，处理自然语言并执行操作。
 

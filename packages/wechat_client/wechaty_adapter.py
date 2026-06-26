@@ -9,6 +9,8 @@ Wechaty Adapter for Personal WeChat
 This adapter uses Wechaty (Python) to control personal WeChat.
 """
 
+from __future__ import annotations
+
 import asyncio
 import os
 from typing import Optional, Callable, Any, Dict
