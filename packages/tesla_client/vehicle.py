@@ -19,6 +19,7 @@ from datetime import datetime
 
 from .models import VehicleData
 from .exceptions import VehicleUnavailableError, CommandFailedError
+from .platform import PlatformInfo, detect_platform
 
 if TYPE_CHECKING:
     from .client import TeslaFleetClient
@@ -50,106 +51,115 @@ class Vehicle:
         self.display_name = data.get("display_name")
         self.state = data.get("state")  # online, asleep, offline
         self.in_service = data.get("in_service", False)
-        
-        # Vehicle type detection
-        self.model_type = self._detect_model_type()
-        
+
+        # Vehicle platform detection (VIN-based initially; will be refined
+        # once get_vehicle_data() provides vehicle_config)
+        self._platform_info: PlatformInfo = detect_platform(self.vin)
+
         # Cached vehicle data
         self._vehicle_data: Optional[VehicleData] = None
         self._data_timestamp: Optional[datetime] = None
-    
-    def _detect_model_type(self) -> str:
-        """Detect vehicle model type from VIN."""
-        if not self.vin or len(self.vin) < 7:
-            return "unknown"
-        
-        # VIN position 4-7 indicates model
-        vin_mid = self.vin[3:7]
-        
-        # Model 3: 5YJ3E (2017-2023) or LRW3E (2024+ Highland)
-        if "5YJ3" in vin_mid or "LRW3" in vin_mid:
-            return "model3"
-        # Model Y: 5YJY (2020-2024) or LRWY (2025+ Juniper)
-        elif "5YJY" in vin_mid or "LRWY" in vin_mid:
-            return "modely"
-        # Model S: 5YJS
-        elif "5YJS" in vin_mid:
-            return "models"
-        # Model X: 5YJX
-        elif "5YJX" in vin_mid:
-            return "modelx"
-        # Cybertruck: 7G2C
-        elif "7G2C" in vin_mid:
-            return "cybertruck"
-        
-        return "unknown"
-    
-    def _detect_hardware_generation(self) -> str:
-        """Detect hardware generation from VIN and firmware."""
-        if not self.vin or len(self.vin) < 10:
-            return "unknown"
-        
-        # VIN 10th character indicates model year
-        year_char = self.vin[9]
-        
-        # New VIN patterns (LRW prefix) = MCU3/HW4
-        if self.vin.startswith("LRW"):
-            return "hw4_mcu3"
-        
-        # Old VIN patterns with year >= 2024 = likely HW4
-        if year_char in ("R", "S", "T"):  # 2024, 2025, 2026
-            return "hw4_mcu3"
-        
-        # 2023 and earlier = MCU2/HW3
-        return "hw3_mcu2"
-    
+
+    def update_platform_info(self, vehicle_data: VehicleData) -> None:
+        """
+        Re-detect platform using real vehicle_config from Fleet API.
+
+        Call this after get_vehicle_data() for accurate hardware detection.
+        """
+        config = None
+        if vehicle_data and vehicle_data.vehicle_config:
+            config = vehicle_data.vehicle_config.model_dump(mode="json")
+        self._platform_info = detect_platform(self.vin, config)
+
+    @property
+    def platform_info(self) -> PlatformInfo:
+        """Get normalized platform information."""
+        return self._platform_info
+
+    @property
+    def model_type(self) -> str:
+        """Check vehicle model type."""
+        return self._platform_info.model_type
+
+    @property
+    def model_year(self) -> int:
+        """Check vehicle model year."""
+        return self._platform_info.model_year
+
+    @property
+    def mcu_version(self) -> str:
+        """Get MCU version (mcu1/mcu2/mcu3/unknown)."""
+        return self._platform_info.mcu_version
+
+    @property
+    def hw_version(self) -> str:
+        """Get Autopilot HW version (hw1/hw2/hw2_5/hw3/hw4/unknown)."""
+        return self._platform_info.hw_version
+
+    @property
+    def refresh_generation(self) -> str:
+        """Get refresh generation (pre_refresh/highland/juniper/refresh)."""
+        return self._platform_info.refresh_generation
+
+    @property
+    def manufacturing_region(self) -> str:
+        """Get manufacturing region."""
+        return self._platform_info.manufacturing_region
+
     @property
     def is_model3(self) -> bool:
         """Check if vehicle is Model 3."""
-        return self.model_type == "model3"
-    
+        return self._platform_info.model_type == "model3"
+
     @property
     def is_modely(self) -> bool:
         """Check if vehicle is Model Y."""
-        return self.model_type == "modely"
-    
+        return self._platform_info.model_type == "modely"
+
     @property
     def is_highland(self) -> bool:
-        """Check if vehicle is Model 3 Highland (2023+ refresh)."""
-        return self.model_type == "model3" and self.vin.startswith("LRW")
-    
+        """Check if vehicle is Model 3 Highland (2024+ refresh)."""
+        return self._platform_info.is_highland
+
     @property
     def is_juniper(self) -> bool:
         """Check if vehicle is Model Y Juniper (2025+ refresh)."""
-        return self.model_type == "modely" and self.vin.startswith("LRW")
-    
+        return self._platform_info.is_juniper
+
     @property
     def is_refreshed(self) -> bool:
-        """Check if vehicle is a refreshed model (Highland or Juniper)."""
-        return self.is_highland or self.is_juniper
-    
+        """Check if vehicle is a refreshed model."""
+        return self._platform_info.is_refreshed
+
+    @property
+    def is_cybertruck(self) -> bool:
+        """Check if vehicle is Cybertruck."""
+        return self._platform_info.is_cybertruck
+
     @property
     def has_mcu3(self) -> bool:
         """Check if vehicle has MCU3 (AMD Ryzen)."""
-        hw = self._detect_hardware_generation()
-        return hw == "hw4_mcu3"
-    
+        return self._platform_info.has_mcu3
+
+    @property
+    def has_hw4(self) -> bool:
+        """Check if vehicle has HW4/AI4."""
+        return self._platform_info.has_hw4
+
     @property
     def has_seat_cooling(self) -> bool:
         """Check if vehicle has ventilated seats."""
-        # MCU3 vehicles (Highland/Juniper) have ventilated seats
-        return self.has_mcu3
-    
+        return self._platform_info.has_seat_cooling
+
     @property
     def has_bioweapon_mode(self) -> bool:
         """Check if vehicle has Bioweapon Defense Mode."""
-        # Available on refreshed models
-        return self.is_refreshed
-    
+        return self._platform_info.has_bioweapon_mode
+
     @property
     def is_m3_platform(self) -> bool:
         """Check if vehicle is on M3/MY platform (no lat/lon required for window close)."""
-        return self.model_type in ("model3", "modely")
+        return self._platform_info.is_m3_platform
     
     async def _request(
         self,
@@ -213,6 +223,7 @@ class Vehicle:
         data = await self._request("GET", endpoint)
         self._vehicle_data = VehicleData(**data.get("response", {}))
         self._data_timestamp = datetime.utcnow()
+        self.update_platform_info(self._vehicle_data)
         return self._vehicle_data
     
     async def get_location_data(self) -> Dict[str, Any]:

@@ -77,7 +77,7 @@ class XClawAgent:
 
 你可以帮助用户控制他们的特斯拉车辆，包括：
 - 车门控制：锁定/解锁、控制车窗、开启前/后备箱
-- 空调控制：开启/关闭空调、设置温度、座椅加热、方向盘加热
+- 空调控制：开启/关闭空调、设置温度、座椅加热、座椅通风、方向盘加热
 - 充电管理：开始/停止充电、设置充电限制、设置充电电流
 - 位置服务：获取车辆位置
 - 哨兵模式：开启/关闭哨兵模式
@@ -86,6 +86,8 @@ class XClawAgent:
 - 代客模式：开启/关闭代客模式
 - 软件更新：调度/取消软件更新
 - Homelink：触发车库门开关
+
+车辆平台信息（如可用）将附加在后续 system 消息中，告知你当前车辆的 MCU、HW 及支持的功能。如果某项功能在当前车辆上不可用，请拒绝执行并友好解释。
 
 重要规则：
 1. 始终用中文回复用户
@@ -231,7 +233,7 @@ class XClawAgent:
             )
         
         # Build messages for LLM
-        messages = self._build_messages(uid)
+        messages = await self._build_messages(uid)
         
         try:
             # Get completion with function calling
@@ -360,9 +362,36 @@ class XClawAgent:
                 context={"error": str(e)}
             )
     
-    def _build_messages(self, user_id: str) -> List[Dict[str, str]]:
+    async def _get_platform_context(self) -> str:
+        """Get vehicle platform summary for system prompt."""
+        try:
+            vehicle = await self.vehicle_context.get_vehicle()
+            info = await self.tools.execute("get_vehicle_info", {})
+            if info.success and info.data:
+                data = info.data
+                features = data.get("features", {})
+                supported = [k for k, v in features.items() if v]
+                unsupported = [k for k, v in features.items() if not v]
+                context = (
+                    f"当前车辆: {data.get('model', '未知')} {data.get('generation', '')}\n"
+                    f"MCU: {data.get('mcu', '未知')}, HW: {data.get('hw', '未知')}\n"
+                    f"支持的功能: {', '.join(supported)}"
+                )
+                if unsupported:
+                    context += f"\n不支持的功能: {', '.join(unsupported)}"
+                return context
+        except Exception:
+            pass
+        return ""
+
+    async def _build_messages(self, user_id: str) -> List[Dict[str, str]]:
         """Build messages for LLM with persistent memory context."""
         messages = [{"role": "system", "content": self.SYSTEM_PROMPT}]
+
+        # Add vehicle platform context
+        platform_context = await self._get_platform_context()
+        if platform_context:
+            messages.append({"role": "system", "content": platform_context})
         
         # Add user preferences from persistent memory
         if self.persistent_memory:

@@ -29,30 +29,39 @@ xClaw is a lightweight, extensible AI framework that lets you control your Tesla
 
 ## Supported Tesla Vehicles
 
-xClaw supports all Tesla Model 3 and Model Y vehicles, including the latest refreshed versions:
+xClaw supports Tesla vehicles across multiple platforms and hardware generations:
 
-| 车型 | 年款 | 代号 | MCU | 自动驾驶硬件 | VIN 前缀 |
-|------|------|------|-----|-------------|----------|
-| Model 3 旧款 | 2017-2023 | - | MCU2 (Intel Atom) | HW3.0/HW2.5 | `5YJ3E` |
-| **Model 3 焕新版** | 2023 Q4+ | **Highland** | **MCU3 (AMD Ryzen)** | **HW4.0** | `LRW3E` |
-| Model Y 旧款 | 2020-2024 | - | MCU2 (Intel Atom) | HW3.0 | `5YJY` |
-| **Model Y 焕新版** | 2025 Q1+ | **Juniper** | **MCU3 (AMD Ryzen)** | **HW4.0** | `LRWY` |
+| 车型 | 年款 | 代号 | MCU | 自动驾驶硬件 | 备注 |
+|------|------|------|-----|-------------|------|
+| Model 3 旧款 | 2017–2023 | - | MCU2 (Intel Atom) | HW2.5 / HW3 | `5YJ3E` |
+| **Model 3 焕新版** | 2023 Q4+ | **Highland** | **MCU3 (AMD Ryzen)** | **HW4 (AI4)** | `LRW3E` |
+| Model Y 旧款 | 2020–2024 | - | MCU2 (Intel Atom) | HW3 / HW4 | `5YJY` |
+| **Model Y 焕新版** | 2025 Q1+ | **Juniper** | **MCU3 (AMD Ryzen)** | **HW4 (AI4)** | `LRWY` |
+| Model S 旧款 | 2016–2020 | - | MCU1 / MCU2 | HW1–HW3 | `5YJS` |
+| **Model S 改款** | 2021+ | **Refresh / Plaid** | **MCU3 (AMD Ryzen)** | **HW3 / HW4** | `5YJS` |
+| Model X 旧款 | 2016–2020 | - | MCU1 / MCU2 | HW1–HW3 | `5YJX` |
+| **Model X 改款** | 2021+ | **Refresh / Plaid** | **MCU3 (AMD Ryzen)** | **HW3 / HW4** | `5YJX` |
+| **Cybertruck** | 2023+ | - | **MCU3 (AMD Ryzen)** | **HW4 (AI4)** | `7G2C` |
+
+> **注意**：MCU（车机/信息娱乐）与 HW（自动驾驶硬件）相互独立。xClaw 优先通过 Tesla Fleet API 的 `vehicle_config` 字段识别真实硬件，未获取到数据时回退到 VIN 规则。
 
 ### 功能兼容性
 
-| 功能 | 旧款 (MCU2) | 焕新版 (MCU3) |
-|------|------------|--------------|
+| 功能 | 旧款 (MCU2) | 焕新版/改款 (MCU3) |
+|------|------------|-------------------|
 | 基础控制 (锁车/解锁/鸣笛/闪灯) | ✅ | ✅ |
 | 空调控制 | ✅ | ✅ |
 | 充电控制 | ✅ | ✅ |
 | 座椅加热 | ✅ | ✅ |
 | **座椅通风** | ❌ | ✅ |
 | 方向盘加热 | ✅ | ✅ |
-| **生物武器防御模式** | ❌ | ✅ |
+| **生物武器防御模式** | ❌* | ✅ |
 | 宠物/露营模式 | ✅ | ✅ |
 | 新调度命令 | 需固件 2024.26+ | ✅ |
 | 导航命令 | ✅ | ✅ |
 | 媒体控制 | ✅ | ✅ |
+
+> *Model S/X 全系（含旧款）均配备生物武器防御模式。
 
 ### 硬件检测
 

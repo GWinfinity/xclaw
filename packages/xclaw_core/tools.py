@@ -62,6 +62,7 @@ class TeslaToolSet:
             "navigate_to": self._navigate_to,
             "navigate_to_supercharger": self._navigate_to_supercharger,
             "set_climate_keeper_mode": self._set_climate_keeper_mode,
+            "set_seat_cooler": self._set_seat_cooler,
             "set_bioweapon_mode": self._set_bioweapon_mode,
             "get_vehicle_info": self._get_vehicle_info,
         }
@@ -516,6 +517,27 @@ class TeslaToolSet:
             {
                 "type": "function",
                 "function": {
+                    "name": "set_seat_cooler",
+                    "description": "设置座椅通风 (仅支持配备通风座椅的车型)",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "seat": {
+                                "type": "integer",
+                                "description": "座位位置: 0=前排左, 1=前排右",
+                            },
+                            "level": {
+                                "type": "integer",
+                                "description": "通风等级: 0=关闭, 1=低档, 2=中档, 3=高档",
+                            },
+                        },
+                        "required": ["seat", "level"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
                     "name": "set_bioweapon_mode",
                     "description": "设置生物武器防御模式",
                     "parameters": {
@@ -784,31 +806,28 @@ class TeslaToolSet:
         return {"success": success, "mode": mode_names.get(mode, f"模式{mode}")}
     
     async def _set_seat_cooler(self, seat: int, level: int) -> Dict[str, Any]:
-        """Set seat cooler (MCU3/Highland/Juniper only)."""
+        """Set seat cooler (vehicles with ventilated seats only)."""
         vehicle = await self.vehicle_context.get_vehicle()
-        if not hasattr(vehicle, 'has_seat_cooling') or not vehicle.has_seat_cooling:
-            return {"success": False, "error": "座椅通风仅支持焕新版车型 (Model 3 Highland / Model Y Juniper)"}
+        if not getattr(vehicle, 'has_seat_cooling', False):
+            return {"success": False, "error": "当前车辆未配备座椅通风功能"}
+        if seat not in (0, 1):
+            return {"success": False, "error": "座椅通风仅支持前排座位 (0=左, 1=右)"}
         success = await vehicle.set_seat_cooler(seat, level)
         return {"success": success, "seat": seat, "level": level}
-    
+
     async def _set_bioweapon_mode(self, enabled: bool) -> Dict[str, Any]:
-        """Set bioweapon defense mode (refreshed models only)."""
+        """Set bioweapon defense mode (supported models only)."""
         vehicle = await self.vehicle_context.get_vehicle()
-        if not hasattr(vehicle, 'has_bioweapon_mode') or not vehicle.has_bioweapon_mode:
-            return {"success": False, "error": "生物武器防御模式仅支持焕新版车型"}
+        if not getattr(vehicle, 'has_bioweapon_mode', False):
+            return {"success": False, "error": "当前车辆不支持生物武器防御模式"}
         success = await vehicle.set_bioweapon_mode(enabled)
         return {"success": success, "bioweapon_mode": enabled}
-    
+
     async def _get_vehicle_info(self) -> Dict[str, Any]:
         """Get vehicle hardware info and supported features."""
         vehicle = await self.vehicle_context.get_vehicle()
-        
-        # Detect model type
-        model_type = getattr(vehicle, 'model_type', 'unknown')
-        is_highland = getattr(vehicle, 'is_highland', False)
-        is_juniper = getattr(vehicle, 'is_juniper', False)
-        has_mcu3 = getattr(vehicle, 'has_mcu3', False)
-        
+        platform = getattr(vehicle, 'platform_info', None)
+
         # Model name mapping
         model_names = {
             'model3': 'Model 3',
@@ -816,43 +835,75 @@ class TeslaToolSet:
             'models': 'Model S',
             'modelx': 'Model X',
             'cybertruck': 'Cybertruck',
+            'semi': 'Semi',
+            'roadster': 'Roadster',
         }
-        
-        # Generation name
-        if is_highland:
-            generation = "焕新版 (Highland)"
-        elif is_juniper:
-            generation = "焕新版 (Juniper)"
+
+        if platform:
+            model_type = platform.model_type
+            refresh = platform.refresh_generation
+            has_mcu3 = platform.has_mcu3
+            has_hw4 = platform.has_hw4
+            has_seat_cooling = platform.has_seat_cooling
+            has_bioweapon_mode = platform.has_bioweapon_mode
         else:
-            generation = "旧款"
-        
-        # Hardware info
-        hw_gen = getattr(vehicle, '_detect_hardware_generation', lambda: 'unknown')()
-        mcu = "MCU3 (AMD Ryzen)" if has_mcu3 else "MCU2 (Intel Atom)"
-        
+            # Fallback to legacy properties
+            model_type = getattr(vehicle, 'model_type', 'unknown')
+            refresh = "unknown"
+            has_mcu3 = getattr(vehicle, 'has_mcu3', False)
+            has_hw4 = False
+            has_seat_cooling = getattr(vehicle, 'has_seat_cooling', False)
+            has_bioweapon_mode = getattr(vehicle, 'has_bioweapon_mode', False)
+
+        # Generation name
+        generation_names = {
+            "highland": "焕新版 (Highland)",
+            "juniper": "焕新版 (Juniper)",
+            "refresh": "改款 (Refresh)",
+            "pre_refresh": "旧款",
+            "unknown": "未知",
+        }
+        generation = generation_names.get(refresh, refresh)
+
+        # Hardware display names
+        mcu_names = {
+            "mcu1": "MCU1 (NVIDIA Tegra)",
+            "mcu2": "MCU2 (Intel Atom)",
+            "mcu3": "MCU3 (AMD Ryzen)",
+            "unknown": "未知",
+        }
+        hw_names = {
+            "hw1": "HW1 (Mobileye)",
+            "hw2": "HW2",
+            "hw2_5": "HW2.5",
+            "hw3": "HW3 (AI3)",
+            "hw4": "HW4 (AI4)",
+            "unknown": "未知",
+        }
+
         # Supported features
         features = {
             "基础控制": True,
             "空调控制": True,
             "充电控制": True,
             "座椅加热": True,
-            "座椅通风": has_mcu3,
+            "座椅通风": has_seat_cooling,
             "方向盘加热": True,
-            "生物武器防御模式": is_highland or is_juniper,
+            "生物武器防御模式": has_bioweapon_mode,
             "宠物/露营模式": True,
             "新调度命令": has_mcu3,
-            "窗户控制(无需坐标)": True,
+            "窗户控制(无需坐标)": model_type in ("model3", "modely"),
             "导航命令": True,
             "媒体控制": True,
         }
-        
+
         return {
             "display_name": vehicle.display_name,
             "vin": vehicle.vin,
             "model": model_names.get(model_type, model_type),
             "generation": generation,
-            "hardware": hw_gen,
-            "mcu": mcu,
-            "is_refreshed": is_highland or is_juniper,
+            "mcu": mcu_names.get(getattr(vehicle, 'mcu_version', 'unknown'), "未知"),
+            "hw": hw_names.get(getattr(vehicle, 'hw_version', 'unknown'), "未知"),
+            "is_refreshed": refresh in ("highland", "juniper", "refresh"),
             "features": features,
         }
