@@ -6,7 +6,7 @@
 
 **Natural Language Control for Tesla Vehicles**
 
-xClaw is a lightweight, extensible AI framework that lets you control your Tesla using natural language. Built on the Tesla Fleet API with multi-platform integrations and support for 9+ LLM providers.
+xClaw is a lightweight, extensible AI framework that lets you control your Tesla using natural language. Built on the Tesla Fleet API with multi-platform integrations and support for 10+ LLM providers.
 
 [Features](#features) • [Quick Start](#quick-start) • [Installation](#installation) • [Documentation](#documentation) • [Examples](#examples)
 
@@ -15,7 +15,7 @@ xClaw is a lightweight, extensible AI framework that lets you control your Tesla
 ## Features
 
 - **🗣️ Natural Language Control** — Talk to your Tesla like a human. No command memorization needed.
-- **🧠 Multi-LLM Support** — OpenAI, xAI (Grok), Anthropic, DeepSeek, Qwen, Kimi, and more
+- **🧠 Multi-LLM Support** — OpenAI, xAI (Grok), Anthropic, DeepSeek, StepFun, Qwen, Kimi, and more
 - **💬 Multi-Platform** — Discord, Telegram, WeChat, Slack integrations
 - **🔧 Function Calling** — AI agents that actually *do* things, not just chat (28+ vehicle tools)
 - **🧠 Persistent Memory** — SQLite + FTS5 full-text search, remembers across sessions
@@ -230,6 +230,7 @@ TELEGRAM_BOT_TOKEN=...
 | **OpenAI** | `openai` | `gpt-4o` | Best overall capabilities |
 | **xAI** | `xai` | `grok-3` | Fast reasoning, real-time data |
 | **DeepSeek** | `deepseek` | `deepseek-chat` | Cost-effective, strong reasoning |
+| **StepFun** | `step` | `step-2` | Chinese LLM with multimodal support |
 | **Anthropic** | `anthropic` | `claude-3-opus` | Excellent for complex tasks |
 | **Moonshot Kimi** | `kimi` | `kimi-latest` | Long context window |
 | **Alibaba Qwen** | `qwen` | `qwen-max` | Strong multilingual support |
@@ -263,7 +264,7 @@ xClaw
 │   └── StructuredLogger        # Observability with structlog
 │
 ├── Adapter Layer
-│   ├── llm-adapters/           # 9+ LLM provider adapters
+│   ├── llm-adapters/           # 10+ LLM provider adapters
 │   │   ├── OpenAI
 │   │   ├── xAI (Grok)
 │   │   ├── DeepSeek

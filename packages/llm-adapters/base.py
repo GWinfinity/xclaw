@@ -19,6 +19,7 @@ class LLMProvider(str, Enum):
     KIMI = "kimi"               # Moonshot Kimi
     SPARK = "spark"             # iFlytek Spark
     DEEPSEEK = "deepseek"       # DeepSeek
+    STEP = "step"               # StepFun (阶跃星辰)
     OPENROUTER = "openrouter"   # OpenRouter
     XAI = "xai"                 # xAI (Grok)
 

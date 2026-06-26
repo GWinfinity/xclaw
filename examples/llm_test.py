@@ -104,6 +104,8 @@ async def test_all_providers():
             providers_to_test.append("wenxin")
         if os.getenv("DEEPSEEK_API_KEY"):
             providers_to_test.append("deepseek")
+        if os.getenv("STEP_API_KEY"):
+            providers_to_test.append("step")
         if os.getenv("OPENROUTER_API_KEY"):
             providers_to_test.append("openrouter")
         if os.getenv("SPARK_API_KEY"):
@@ -118,6 +120,7 @@ async def test_all_providers():
             print("  - KIMI_API_KEY")
             print("  - WENXIN_API_KEY")
             print("  - DEEPSEEK_API_KEY")
+            print("  - STEP_API_KEY")
             print("  - SPARK_API_KEY")
             print("  - OPENROUTER_API_KEY")
             return

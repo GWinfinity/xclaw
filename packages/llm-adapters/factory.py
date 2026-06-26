@@ -15,6 +15,7 @@ from .zhipu_adapter import ZhipuAdapter
 from .kimi_adapter import KimiAdapter
 from .spark_adapter import SparkAdapter
 from .deepseek_adapter import DeepseekAdapter
+from .step_adapter import StepAdapter
 from .openrouter_adapter import OpenRouterAdapter
 from .xai_adapter import XAIAdapter
 
@@ -44,6 +45,7 @@ class LLMFactory:
         LLMProvider.KIMI: KimiAdapter,
         LLMProvider.SPARK: SparkAdapter,
         LLMProvider.DEEPSEEK: DeepseekAdapter,
+        LLMProvider.STEP: StepAdapter,
         LLMProvider.OPENROUTER: OpenRouterAdapter,
         LLMProvider.XAI: XAIAdapter,
     }
@@ -85,6 +87,11 @@ class LLMFactory:
             "api_key": "DEEPSEEK_API_KEY",
             "model": "DEEPSEEK_MODEL",
             "api_base": "DEEPSEEK_API_BASE",
+        },
+        LLMProvider.STEP: {
+            "api_key": "STEP_API_KEY",
+            "model": "STEP_MODEL",
+            "api_base": "STEP_API_BASE",
         },
         LLMProvider.OPENROUTER: {
             "api_key": "OPENROUTER_API_KEY",
@@ -212,6 +219,10 @@ class LLMFactory:
             "星火": LLMProvider.SPARK,
             "deepseek": LLMProvider.DEEPSEEK,
             "深度求索": LLMProvider.DEEPSEEK,
+            "step": LLMProvider.STEP,
+            "stepfun": LLMProvider.STEP,
+            "阶跃": LLMProvider.STEP,
+            "阶跃星辰": LLMProvider.STEP,
             "openrouter": LLMProvider.OPENROUTER,
             "xai": LLMProvider.XAI,
             "grok": LLMProvider.XAI,

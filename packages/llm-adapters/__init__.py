@@ -9,6 +9,7 @@ Universal adapter for multiple LLM providers:
 - Moonshot Kimi
 - iFlytek Spark
 - DeepSeek
+- StepFun (阶跃星辰)
 - OpenRouter
 - xAI (Grok)
 
@@ -34,6 +35,7 @@ from .zhipu_adapter import ZhipuAdapter
 from .kimi_adapter import KimiAdapter
 from .spark_adapter import SparkAdapter
 from .deepseek_adapter import DeepseekAdapter
+from .step_adapter import StepAdapter
 from .openrouter_adapter import OpenRouterAdapter
 from .xai_adapter import XAIAdapter
 
@@ -56,6 +58,7 @@ __all__ = [
     "KimiAdapter",
     "SparkAdapter",
     "DeepseekAdapter",
+    "StepAdapter",
     "OpenRouterAdapter",
     "XAIAdapter",
 ]
